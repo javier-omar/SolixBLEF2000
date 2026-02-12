@@ -223,6 +223,7 @@ class SolixBLEDevice:
                     device=self._ble_device,
                     name=self.address,
                     max_attempts=max_attempts,
+                    use_services_cache=False,
                     disconnected_callback=self._disconnect_callback,
                 )
                 await asyncio.sleep(3)
