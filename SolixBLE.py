@@ -897,6 +897,26 @@ class C300(SolixBLEDevice):
         return self._parse_int("ae", begin=1)
 
     @property
+    def ac_on(self) -> bool:
+        """Is the AC output on.
+
+        :returns: AC output on or default bool value.
+        """
+        return (
+            bool(self._parse_int("b7", begin=1))
+            if self._data is not None
+            else DEFAULT_METADATA_BOOL
+        )
+
+    @property
+    def temperature(self) -> int:
+        """Temperature of the unit (C).
+
+        :returns: Temperature of the unit in degrees C.
+        """
+        return self._parse_int("b9", begin=1, signed=True)
+
+    @property
     def charging_status(self) -> ChargingStatus:
         """Charging status of the device.
 
@@ -1176,7 +1196,7 @@ class C1000(SolixBLEDevice):
     def temperature(self) -> int:
         """Temperature of the unit (C).
 
-        :returns: AC output on or default bool value.
+        :returns: Temperature of the unit in degrees C.
         """
         return self._parse_int("bd", begin=1, signed=True)
 
