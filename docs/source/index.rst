@@ -60,7 +60,7 @@ Expansion num           N/A       ✅
 USB Port status         ✅        ❌
 DC Port status          ✅        ❌
 Light status            ✅        ❌
-Serial number           ✅        ❌
+Serial number           ✅        ✅
 ======================= ======== =========
 
 
