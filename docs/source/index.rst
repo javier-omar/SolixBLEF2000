@@ -29,39 +29,110 @@ No pairing is required in order to receive telemetry data.
    This project is under active development.
 
 
-Device support
---------------
+Power station support
+---------------------
 
-======================= ======== ========== ========= ========= ============ ====== ==============
-Parameter               C300(X)  C300(X) DC C1000(X)  C1000 G2  F2000 (767)  F3800  Solarbank 2/3  
-======================= ======== ========== ========= ========= ============ ====== ==============
-AC Timer.               ✅        ❌          ✅        ❌         ❌           ❌     ❌ 
-DC Timer.               ✅        ❌          ❌        ❌         ❌           ❌     ❌
-Time remaining.         ✅        ✅          ✅        ❌         ✅           ✅     ❌
-AC Power in.            ✅        N/A         ✅        ✅         ✅           ✅     ✅
-AC Power out.           ✅        N/A         ✅        ✅         ✅           ✅     ✅
-USB Power out.          ✅        ✅          ✅        ✅         ✅           ✅     ❌   
-DC Power Out.           ✅        ✅          ❌        ✅         ✅           ✅     ❌
-DC Power In.            ✅        ✅          ✅        ✅         ✅           ✅     ✅
-DC Power In status.     ✅        ✅          ✅        ✅         ❌           ❌     ❌
-Total Power In.         ✅        ✅          ✅        ❌         ❌           ✅     ✅
-Total Power Out.        ✅        ✅          ✅        ✅         ❌           ✅     ✅
-Firmware version        ✅        ❌          ✅        ❌         ✅           ✅     ✅
-Expansion firmware      N/A       N/A         ✅        N/A        ✅          ✅     ✅
-AC on/off state         ✅        N/A         ✅        ✅         ❌           ✅     ❌
-Temperature             ✅        ✅          ✅        ✅         ✅           ✅     ✅
-Expansion temperature   N/A       N/A         ✅        N/A       ✅           ❌     ❌
-Charging status         ✅        ✅          ❌        ❌         ❌           ✅     ❌
-Battery percentage      ✅        ✅          ✅        ✅         ✅           ✅     ✅
-Expansion percentage    N/A       N/A         ✅        N/A       ✅           ✅     ✅
-Battery health          ❌        ✅           ✅       ✅         ✅           ❌     ❌
-Expansion health        N/A       N/A         ✅        N/A       ✅           ❌     ❌
-Expansion num           N/A       N/A         ✅        N/A       ✅           ❌     ❌
-USB Port status         ✅        ✅          ❌        ✅         ❌           ✅     ❌
-DC Port status          ✅        ❌          ❌        ✅         ❌           ✅     ❌
-Light status            ✅        ✅          ❌        N/A        ❌           ❌     ❌
-Serial number           ✅        ❌          ✅        ✅         ✅           ✅     ✅
-======================= ======== ========== ========= ========= ============ ====== ==============
+======================= ======== ========== ========= ========= ============ ====== 
+Parameter               C300(X)  C300(X) DC C1000(X)  C1000 G2  F2000 (767)  F3800  
+======================= ======== ========== ========= ========= ============ ====== 
+AC Timer.               ✅        ❌          ✅        ❌         ❌           ❌     
+DC Timer.               ✅        ❌          ❌        ❌         ❌           ❌     
+Time remaining.         ✅        ✅          ✅        ❌         ✅           ✅     
+AC Power in.            ✅        N/A         ✅        ✅         ✅           ✅     
+AC Power out.           ✅        N/A         ✅        ✅         ✅           ✅     
+USB Power out.          ✅        ✅          ✅        ✅         ✅           ✅     
+DC Power Out.           ✅        ✅          ❌        ✅         ✅           ✅     
+DC Power In.            ✅        ✅          ✅        ✅         ✅           ✅     
+DC Power In status.     ✅        ✅          ✅        ✅         ❌           ❌     
+Total Power In.         ✅        ✅          ✅        ❌         ❌           ✅     
+Total Power Out.        ✅        ✅          ✅        ✅         ❌           ✅     
+Firmware version        ✅        ❌          ✅        ❌         ✅           ✅     
+Expansion firmware      N/A       N/A         ✅        N/A        ✅          ✅     
+AC on/off state         ✅        N/A         ✅        ✅         ❌           ✅     
+Temperature             ✅        ✅          ✅        ✅         ✅           ✅     
+Expansion temperature   N/A       N/A         ✅        N/A       ✅           ❌     
+Charging status         ✅        ✅          ❌        ❌         ❌           ✅     
+Battery percentage      ✅        ✅          ✅        ✅         ✅           ✅     
+Expansion percentage    N/A       N/A         ✅        N/A       ✅           ✅     
+Battery health          ❌        ✅           ✅       ✅         ✅           ❌     
+Expansion health        N/A       N/A         ✅        N/A       ✅           ❌     
+Expansion num           N/A       N/A         ✅        N/A       ✅           ❌     
+USB Port status         ✅        ✅          ❌        ✅         ❌           ✅     
+DC Port status          ✅        ❌          ❌        ✅         ❌           ✅     
+Light status            ✅        ✅          ❌        N/A        ❌           ❌     
+Serial number           ✅        ❌          ✅        ✅         ✅           ✅     
+======================= ======== ========== ========= ========= ============ ======
+
+
+Solar system support
+--------------------
+
+=================================  ============ ============ 
+Parameter                          Solarbank 2  Solarbank 3  
+=================================  ============ ============  
+AC power out                        ✅           ❌
+AC power out (sockets)              ✅           ❌
+Total power out                     ✅           ✅
+Total energy out                    ✅           ✅
+Solar power in                      ✅           ✅
+Solar energy in                     ✅           ✅
+Individual solar power in           ✅           ✅
+Battery power in/out                ✅           ✅
+Battery energy in                   ✅           ✅
+Battery energy out                  ❌           ✅
+Battery percentage                  ✅           ✅
+Battery percentage aggregate        ✅           ✅
+Expansion battery percentage        ❌           ❌
+Charging status                     ❌           ❌
+Battery health                      ❌           ✅
+Expansion battery health            ❌           ❌
+Temperature                         ✅           ✅
+Temperature unit                    ❌           ❌
+Expansion battery temperature       ❌           ❌
+Battery heating                     ❌           ❌
+Batter heating power                ❌           ❌
+Grid status                         ❌           ❌
+Grid power in/out                   ❌           ✅
+Grid to Home power                  ✅           ✅
+PV to Grid power                    ✅           ❌
+Grid import energy                  ✅           ✅
+Grid export energy                  ✅           ✅
+Grid export disable/enable          ❌           ❌
+House demand                        ✅           ✅
+House consumption                   ❌           ✅
+Consumed energy                     ✅           ❌
+Error codes                         ❌           ❌
+Max load                            ❌           ❌
+Usage mode                          ❌           ❌
+Presets                             ❌           ❌
+Light mode                          ❌           ❌
+PV limitations                      ❌           ❌
+AC limitations                      ❌           ❌
+Software version                    ✅           ❌  
+Software version controller         ✅           ❌
+Software version expansion          ✅           ❌
+Serial number                       ✅           ✅                    
+Expansion battery serial number     ❌           ❌
+=================================  ============ ============ 
+
+
+Prime charger support
+---------------------
+
+======================= =============
+Parameter               250w (A2345)
+======================= =============
+Display status           ❌
+Total power out          ❌
+Individual port status   ✅
+Individual port voltage  ✅
+Individual port current  ✅
+Individual port power    ✅
+Temperature              ❌
+Firmware version         ❌
+Serial number            ❌
+======================= =============
+
 
 
 Contents
