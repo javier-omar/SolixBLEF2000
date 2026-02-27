@@ -15,6 +15,7 @@ the list of properties for that class.
    c300
    c300dc
    c1000
+   c1000g2
    generic
    enums
    helpers

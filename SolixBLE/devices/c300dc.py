@@ -18,6 +18,10 @@ class C300DC(SolixBLEDevice):
     Use this class to connect and monitor a C300(X) DC power station.
     This model is also known as the A1728.
 
+    .. note::
+        This model was added using data from anker-solix-api. It has not been
+        tested!
+
     """
 
     _EXPECTED_TELEMETRY_LENGTH: int = 253
