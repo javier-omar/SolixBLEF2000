@@ -24,8 +24,9 @@ MOCK_DEVICE_ADDRESS = "AA:BB:CC:DD:EE:FF"
 MOCK_BLE_DEVICE = BLEDevice(MOCK_DEVICE_ADDRESS, MOCK_DEVICE_NAME, {})
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "device_class,data,mapping",
+    "device_class,payload,mapping",
     [
         pytest.param(
             C1000,
@@ -398,18 +399,19 @@ MOCK_BLE_DEVICE = BLEDevice(MOCK_DEVICE_ADDRESS, MOCK_DEVICE_NAME, {})
         ),
     ],
 )
-def test_values(
-    device_class: SolixBLEDevice, data: str, mapping: dict[str, Any]
+async def test_values(
+    device_class: SolixBLEDevice, payload: str, mapping: dict[str, Any]
 ) -> None:
     """
-    Test that a decrypted packet is parsed into the correct values.
+    Test that a payload is parsed into the correct values.
 
     :param device_class: Class of device under test.
-    :param data: The raw decrypted telemetry bytes.
+    :param payload: The payload bytes from a telemetry packet.
     :param mapping: Mapping of class properties to their expected value.
     """
     device = device_class(MOCK_BLE_DEVICE)
-    device._data = device._parse_telemetry_bytes(bytes.fromhex(data))
+    parameters = device._parse_payload(bytes.fromhex(payload))
+    await device._process_telemetry(None, parameters)
 
     for class_property, expected_value in mapping.items():
         assert (
