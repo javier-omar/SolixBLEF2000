@@ -94,3 +94,6 @@ class LightStatus(Enum):
 
     #: The light is on high.
     HIGH = 3
+
+    #: SOS mode. Not supported by all devices.
+    SOS = 4

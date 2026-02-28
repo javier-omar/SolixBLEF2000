@@ -34,6 +34,9 @@ async def test_light_mode(device: SolixBLEDevice):
     await device.set_light_mode(LightStatus.HIGH)
 
     await asyncio.sleep(5)
+    await device.set_light_mode(LightStatus.SOS)
+
+    await asyncio.sleep(5)
     await device.set_light_mode(LightStatus.OFF)
 
 
