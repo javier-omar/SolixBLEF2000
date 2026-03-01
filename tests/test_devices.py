@@ -5,6 +5,7 @@
 """
 
 from typing import Any
+from unittest import mock
 
 import pytest
 from bleak import BLEDevice
@@ -17,6 +18,7 @@ from SolixBLE import (
     LightStatus,
     PortStatus,
     SolixBLEDevice,
+    const,
 )
 
 MOCK_DEVICE_NAME = "Mock Device"
@@ -417,3 +419,156 @@ async def test_values(
         assert (
             getattr(device, class_property) == expected_value
         ), f"Mismatch for property '{class_property}'!"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "device_class, packet_1, packet_2, packet_3, packet_4, packet_5, secret",
+    [
+        pytest.param(
+            C300,
+            "ff090e00030001080100a1010152",
+            "ff091b00030001080300a10102a202fd00a30144a40101a50102ff",
+            "ff093800030001082900a10103a2054553503332a307302e302e302e33a410415a5653424a30453339323030303438a506f49d8a53a95a14",
+            "ff090b00030001080500f2",
+            "ff094d00030001082100a140c2a5a88fab34c1ac0f96a52e1b93354a47fb6c674b5afebacf5a2ed755435f41f0d26e97782e54e268b46d9f8a58a267cd7f7a239771e6289e55d94f7669ed448a",
+            "2e9edc471d11bd214d45c0a651ab42e3cd370e04f1b860fc85adfaf612aba33f",
+            id="c300_1",
+        ),
+        pytest.param(
+            C300,
+            "ff090e00030001080100a1010152",
+            "ff091b00030001080300a10102a202fd00a30144a40101a50102ff",
+            "ff093800030001082900a10103a2054553503332a307302e302e302e33a410415a5653424a30453339323030303438a506f49d8a53a95a14",
+            "ff090b00030001080500f2",
+            "ff094d00030001082100a140a7b5d3824a36cae20bab9fc4d9358191e5351905a782eda157f376cc43f1f761ab772d437f33787188716d1bebd81719d1eb76b94f08499ee93895d5b43e75ef5f",
+            "f97b0112a955846530c60e4cf95f941df76d86ab9ca106aa4bd00fe1c4fcb14f",
+            id="c300_2",
+        ),
+        pytest.param(
+            C1000,
+            "ff090e00030001080100a1010152",
+            "ff091b00030001080300a10102a202fd00a30144a40101a50102ff",
+            "ff093800030001082900a10103a2054553503332a307302e302e302e33a41041504339464530453237333030323735a506f49d8a104e0c9a",
+            "ff090b00030001080500f2",
+            "ff094d00030001082100a140d3ef70a8faeb9ae7d9be034390108c2c7b177f3d549eb87318bd7a31703fc604664efb0e4600298ca9a905fb5af170955fb76229791dd583478b84d9950bd65420",
+            "2bdc8c8bfecf40814f602e6547cf29bf125abcc1a93be0751d8f1065a2bb5570",
+            id="c1000_1",
+        ),
+        pytest.param(
+            C1000,
+            "ff090e00030001080100a1010152",
+            "ff091b00030001080300a10102a202fd00a30144a40101a50102ff",
+            "ff093800030001082900a10103a2054553503332a307302e302e302e33a41041504339464530453237333030323735a506f49d8a104e0c9a",
+            "ff090b00030001080500f2",
+            "ff094d00030001082100a140b2ade5cac4f4a0c1307e44a0e9c5363cb21e4c8485ee324c23be949fa5d5929a75e57da3207c948a0c366ca9ea1ab2cb8e57d2d046a6ebefe5d96adb5d4cb35039",
+            "0c4d9db9ef376fcfe627b9b73089eda514315d4bf67fb7eb299f2894ef7a059c",
+            id="c1000_2",
+        ),
+    ],
+)
+async def test_negotiation(
+    device_class: SolixBLEDevice,
+    packet_1: str,
+    packet_2: str,
+    packet_3: str,
+    packet_4: str,
+    packet_5: str,
+    secret: str,
+):
+    """
+    Test negotiation of the shared secret by mocking a device.
+
+    :param device_class: The class of the device being tested.
+    :param packet_1: Packet sent by device in response to negotiation command 0.
+    :param packet_2: Packet sent by device in response to negotiation command 1.
+    :param packet_3: Packet sent by device in response to negotiation command 2.
+    :param packet_4: Packet sent by device in response to negotiation command 3.
+    :param packet_5: Packet sent by device in response to negotiation command 4.
+    :param secret: The expected shared secret.
+    """
+
+    # Mock the bleak client to allow us to simulate the packet exchange
+    mock_bleak_client = mock.AsyncMock()
+    with mock.patch(
+        "SolixBLE.device.establish_connection", return_value=mock_bleak_client
+    ):
+
+        device = device_class(MOCK_BLE_DEVICE)
+
+        async def write_gatt_char(
+            char_specifier: str, data: bytes, response: bool = False
+        ):
+            """
+            Mock the device responding to commands from the module by
+            mocking the write_gatt_char function of bleak.
+            """
+
+            # Check correct UUID is written to
+            assert char_specifier == const.UUID_COMMAND, "Module wrote to wrong UUID"
+
+            # Respond with appropriate packet that the device would send
+            match data.hex():
+
+                case const.NEGOTIATION_COMMAND_0:
+                    await device._process_notification(-1, bytes.fromhex(packet_1))
+
+                case const.NEGOTIATION_COMMAND_1:
+                    await device._process_notification(-1, bytes.fromhex(packet_2))
+
+                case const.NEGOTIATION_COMMAND_2:
+                    await device._process_notification(-1, bytes.fromhex(packet_3))
+
+                case const.NEGOTIATION_COMMAND_3:
+                    await device._process_notification(-1, bytes.fromhex(packet_4))
+
+                case const.NEGOTIATION_COMMAND_4:
+                    await device._process_notification(-1, bytes.fromhex(packet_5))
+
+                # The device does not usually respond to stage 5
+                case const.NEGOTIATION_COMMAND_5:
+                    return
+
+                # Check no other data is written
+                case _:
+                    assert False, "Module wrote unexpected data"
+
+        # Use mocked bleak function
+        mock_bleak_client.write_gatt_char.side_effect = write_gatt_char
+
+        # Assert that the connection succeeds
+        assert await device.connect(), "Expected connect to return True"
+
+        # Assert that the correct shared secret is calculated
+        assert (
+            bytes.fromhex(secret)[:16] == device._shared_key
+        ), "Negotiated key does not match expected"
+        assert (
+            bytes.fromhex(secret)[16:] == device._iv
+        ), "Negotiated IV does not match expected"
+
+        # Assert that the correct calls are made in the correct order
+        mock_bleak_client.write_gatt_char.assert_has_calls(
+            [
+                mock.call(
+                    const.UUID_COMMAND,
+                    bytes.fromhex(const.NEGOTIATION_COMMAND_0),
+                    response=True,
+                ),
+                mock.call(
+                    const.UUID_COMMAND, bytes.fromhex(const.NEGOTIATION_COMMAND_1)
+                ),
+                mock.call(
+                    const.UUID_COMMAND, bytes.fromhex(const.NEGOTIATION_COMMAND_2)
+                ),
+                mock.call(
+                    const.UUID_COMMAND, bytes.fromhex(const.NEGOTIATION_COMMAND_3)
+                ),
+                mock.call(
+                    const.UUID_COMMAND, bytes.fromhex(const.NEGOTIATION_COMMAND_4)
+                ),
+                mock.call(
+                    const.UUID_COMMAND, bytes.fromhex(const.NEGOTIATION_COMMAND_5)
+                ),
+            ]
+        )
