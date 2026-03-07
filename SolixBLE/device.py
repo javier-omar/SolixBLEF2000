@@ -28,6 +28,7 @@ from cryptography.hazmat.primitives.padding import PKCS7
 
 from .const import (
     BASE_TIMESTAMP,
+    COMMAND_RESPONSE_DELAY,
     DEFAULT_METADATA_INT,
     DEFAULT_METADATA_STRING,
     DISCONNECT_TIMEOUT,
@@ -39,6 +40,15 @@ from .const import (
     NEGOTIATION_COMMAND_5,
     NEGOTIATION_RESPONSE_TIMEOUT,
     NEGOTIATION_TIMEOUT,
+    PACKET_CHECKSUM_LENGTH,
+    PACKET_CMD,
+    PACKET_HEADER,
+    PACKET_HEADER_LENGTH,
+    PACKET_PATTERN,
+    PACKET_SIZE_LENGTH,
+    PAYLOAD_HEADER_TIMESTAMP,
+    PAYLOAD_PADDING_SIZE,
+    PAYLOAD_PARAMETER_HEADER_TIMESTAMP,
     PRIVATE_KEY,
     RECONNECT_ATTEMPTS_MAX,
     RECONNECT_DELAY,
@@ -326,8 +336,8 @@ class SolixBLEDevice:
 
         # Validate header is correct
         packet_header = bytes([packet_copy.pop(0), packet_copy.pop(0)])
-        if packet_header != bytes.fromhex("ff09"):
-            raise ValueError("Packet does not start with FF09!")
+        if packet_header != bytes.fromhex(PACKET_HEADER):
+            raise ValueError(f"Packet does not start with {PACKET_HEADER}!")
 
         # Validate encoded length is correct
         packet_length = int.from_bytes(
@@ -354,7 +364,10 @@ class SolixBLEDevice:
         packet_cmd = bytes([packet_copy.pop(0), packet_copy.pop(0)])
 
         # Telemetry packets have an extra field which must be popped
-        if packet_pattern.hex() == "03010f" and packet_cmd.hex() == "c402":
+        if (
+            packet_pattern.hex() == PACKET_PATTERN.ENCRYPTED
+            and packet_cmd.hex() == PACKET_CMD.PACKET_CMD_TELEMETRY
+        ):
             special_value = bytes([packet_copy.pop(0)])
             _LOGGER.debug(f"Special value: {special_value.hex()}")
 
@@ -519,17 +532,17 @@ class SolixBLEDevice:
         match pattern.hex():
 
             # Encryption negotiation
-            case "030001":
+            case PACKET_PATTERN.NEGOTIATION:
                 _LOGGER.debug("Received encryption negotiation message!")
                 return await self._process_negotiation(cmd, payload)
 
             # Encrypted messages
-            case "03010f":
+            case PACKET_PATTERN.ENCRYPTED:
 
                 match cmd.hex():
 
                     # Telemetry messages
-                    case "c402":
+                    case PACKET_CMD.PACKET_CMD_TELEMETRY:
                         _LOGGER.debug("Received telemetry message!")
 
                         # Anker devices seem to split data across multiple
@@ -612,7 +625,7 @@ class SolixBLEDevice:
             # in stage 1.
 
             # Negotiation stage 1
-            case "0801":
+            case PACKET_CMD.NEGOTIATION_STAGE_1:
                 _LOGGER.debug(
                     "Entered negotiation stage 1 due to response from device!"
                 )
@@ -624,7 +637,7 @@ class SolixBLEDevice:
                 )
 
             # Negotiation stage 2
-            case "0803":
+            case PACKET_CMD.NEGOTIATION_STAGE_2:
                 _LOGGER.debug(
                     "Entered negotiation stage 2 due to response from device!"
                 )
@@ -636,7 +649,7 @@ class SolixBLEDevice:
                 )
 
             # Negotiation stage 3
-            case "0829":
+            case PACKET_CMD.NEGOTIATION_STAGE_3:
                 _LOGGER.debug(
                     "Entered negotiation stage 3 due to response from device!"
                 )
@@ -649,7 +662,7 @@ class SolixBLEDevice:
                 )
 
             # Negotiation stage 4
-            case "0805":
+            case PACKET_CMD.NEGOTIATION_STAGE_4:
                 _LOGGER.debug(
                     "Entered negotiation stage 4 due to response from device!"
                 )
@@ -661,7 +674,7 @@ class SolixBLEDevice:
                 )
 
             # Negotiation stage 5
-            case "0821":
+            case PACKET_CMD.NEGOTIATION_STAGE_5:
                 _LOGGER.debug(
                     "Entered negotiation stage 5 due to response from device!"
                 )
@@ -698,7 +711,7 @@ class SolixBLEDevice:
             # Some devices (e.g C300X) sometimes send an extra message after
             # stage 5 but others (e.g C1000) do not. No response is needed
             # but it does not hurt to decrypt it anyway.
-            case "4822":
+            case PACKET_CMD.NEGOTIATION_STAGE_6:
                 _LOGGER.debug(
                     "Entered negotiation stage 6 (optional) due to response from device!"
                 )
@@ -737,7 +750,9 @@ class SolixBLEDevice:
         new_timestamp = (base_timestamp + time_passed).to_bytes(
             length=4, byteorder="little"
         )
-        new_payload = payload + bytes.fromhex("fe0503") + new_timestamp
+        new_payload = (
+            payload + bytes.fromhex(PAYLOAD_PARAMETER_HEADER_TIMESTAMP) + new_timestamp
+        )
         await self._send_encrypted_packet(cmd, new_payload)
 
     async def _send_encrypted_packet(self, cmd: bytes, payload: bytes) -> None:
@@ -747,7 +762,7 @@ class SolixBLEDevice:
         )
 
         # Pad payload
-        padder = PKCS7(128).padder()
+        padder = PKCS7(PAYLOAD_PADDING_SIZE).padder()
         padded_data = padder.update(payload)
         padded_data += padder.finalize()
 
@@ -756,14 +771,21 @@ class SolixBLEDevice:
         encrypted_payload = cipher.encrypt(padded_data)
 
         # Calculate length of message
-        length = 2 + 2 + 3 + 2 + len(encrypted_payload) + 1
-        length_bytes = length.to_bytes(length=2, byteorder="little")
+        length = (
+            PACKET_HEADER_LENGTH
+            + PACKET_SIZE_LENGTH
+            + PACKET_PATTERN.LENGTH
+            + PACKET_CMD.LENGTH
+            + len(encrypted_payload)
+            + PACKET_CHECKSUM_LENGTH
+        )
+        length_bytes = length.to_bytes(length=PACKET_SIZE_LENGTH, byteorder="little")
 
         # Build packet
         packet = (
-            bytes.fromhex("ff09")
+            bytes.fromhex(PACKET_HEADER)
             + length_bytes
-            + bytes.fromhex("03000f")
+            + bytes.fromhex(PACKET_PATTERN.ENCRYPTED)
             + cmd
             + encrypted_payload
         )
@@ -808,7 +830,7 @@ class SolixBLEDevice:
             self._packet_futures.pop(pattern + cmd)
 
     async def _listen_for_packet(
-        self, pattern: bytes, cmd: bytes, timeout: int = 10
+        self, pattern: bytes, cmd: bytes, timeout: int = COMMAND_RESPONSE_DELAY
     ) -> bytes | None:
         """Wait for a response and return its payload bytes.
 

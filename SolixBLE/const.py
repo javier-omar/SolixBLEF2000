@@ -4,6 +4,10 @@
 
 """
 
+#########
+# UUIDs #
+#########
+
 #: GATT Service UUID for device telemetry. Is subscribable. Handle 17.
 UUID_TELEMETRY = "8c850003-0302-41c5-b46e-cf057c562025"
 
@@ -12,6 +16,11 @@ UUID_COMMAND = "8c850002-0302-41c5-b46e-cf057c562025"
 
 #: GATT Service UUID for identifying Solix devices (Tested on C300X and C1000).
 UUID_IDENTIFIER = "0000ff09-0000-1000-8000-00805f9b34fb"
+
+
+#######################
+# Timeouts and delays #
+#######################
 
 #: Time to wait before re-connecting on an unexpected disconnect.
 RECONNECT_DELAY = 3
@@ -23,14 +32,22 @@ RECONNECT_ATTEMPTS_MAX = -1
 #: device to be disconnected and running state changed callbacks.
 DISCONNECT_TIMEOUT = 120
 
-#: Time to allow for encryption negotiation before timing out
+#: Time to allow for encryption negotiation before timing out.
 NEGOTIATION_TIMEOUT = 90
 
-#: Maximum time to get no response in any negotiation stage before retrying
+#: Maximum time to get no response in any negotiation stage before retrying.
 NEGOTIATION_RESPONSE_TIMEOUT = 15
 
-#: Maximum time to get no response in the 1st negotiation stage before retrying
+#: Maximum time to get no response in the 1st negotiation stage before retrying.
 NEGOTIATION_RESPONSE_DELAY = 10
+
+#: Maximum time to get no response after sending a command before raising an error.
+COMMAND_RESPONSE_DELAY = 10
+
+
+##################
+# Default values #
+##################
 
 #: String value for unknown string attributes.
 DEFAULT_METADATA_STRING = "Unknown"
@@ -43,6 +60,11 @@ DEFAULT_METADATA_FLOAT = -1.0
 
 #: Bool value for unknown boolean attributes.
 DEFAULT_METADATA_BOOL = None
+
+
+#################################
+# Negotiation commands & values #
+#################################
 
 #: Command used to initiate negotiations
 NEGOTIATION_COMMAND_0 = "ff0936000300010001a10442ad8c69a22462326463306231372d623735642d346162662d626136652d656337633939376332336537b9"
@@ -67,7 +89,6 @@ NEGOTIATION_COMMAND_5 = "ff095a000300014022580bc0532a53c739adf3da7b994a7b5f221bc
 #: current encrypted time.
 BASE_TIMESTAMP = "42ad8c69"
 
-
 #: The private key this program uses to perform the ECDH negotiation to
 #: get a shared secret which is then used as an AES key for encrypting
 #: communications between the program and the power station. Yes I know it
@@ -76,3 +97,69 @@ BASE_TIMESTAMP = "42ad8c69"
 #: reason this has to be done at all is because Anker power stations no longer
 #: support sending telemetry in plain text after the latest firmware update.
 PRIVATE_KEY = "7dfbea61cd95cee49c458ad7419e817f1ade9a66136de3c7d5787af1458e39f4"
+
+
+####################
+# Packet constants #
+####################
+
+#: The first two bytes in all packets.
+PACKET_HEADER = "ff09"
+
+#: The length of the packet header (ff09) in bytes.
+PACKET_HEADER_LENGTH = 2
+
+#: The length of the packet size encoded in packets in bytes.
+PACKET_SIZE_LENGTH = 2
+
+#: The length of the packet checksum in packets in bytes.
+PACKET_CHECKSUM_LENGTH = 1
+
+#: Commands require the current time to be encoded as a parameter in the
+#: payload as "fe", this is the header for adding that parameter to the
+#: payload.
+PAYLOAD_PARAMETER_HEADER_TIMESTAMP = "fe0503"
+
+#: The size payloads should be padded to (16 bytes).
+PAYLOAD_PADDING_SIZE = 128
+
+
+class PACKET_PATTERN:
+    """These are the patterns inside packets to indicate encryption type."""
+
+    #: The pattern after the length of the packet in all encrypted messages.
+    ENCRYPTED = "03010f"
+
+    #: The pattern after the length of the packet in all negotiation messages.
+    NEGOTIATION = "030001"
+
+    #: The length of patterns in payloads in bytes.
+    LENGTH = 3
+
+
+class PACKET_CMD:
+    """These are the commands inside packets sent by the device."""
+
+    #: The command contained in all telemetry messages from device.
+    PACKET_CMD_TELEMETRY = "c402"
+
+    #: The command contained in stage 1 negotiation messages from device.
+    NEGOTIATION_STAGE_1 = "0801"
+
+    #: The command contained in stage 2 negotiation messages from device.
+    NEGOTIATION_STAGE_2 = "0803"
+
+    #: The command contained in stage 3 negotiation messages from device.
+    NEGOTIATION_STAGE_3 = "0829"
+
+    #: The command contained in stage 4 negotiation messages from device.
+    NEGOTIATION_STAGE_4 = "0805"
+
+    #: The command contained in stage 5 negotiation messages from device.
+    NEGOTIATION_STAGE_5 = "0821"
+
+    #: The command contained in stage 6 negotiation messages from device.
+    NEGOTIATION_STAGE_6 = "4822"
+
+    #: The length of commands in payloads in bytes.
+    LENGTH = 2
