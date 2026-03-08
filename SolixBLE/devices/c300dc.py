@@ -6,7 +6,12 @@
 
 from datetime import datetime, timedelta
 
-from ..const import DEFAULT_METADATA_BOOL, DEFAULT_METADATA_FLOAT, DEFAULT_METADATA_INT
+from ..const import (
+    DEFAULT_METADATA_BOOL,
+    DEFAULT_METADATA_FLOAT,
+    DEFAULT_METADATA_INT,
+    DEFAULT_METADATA_STRING,
+)
 from ..device import SolixBLEDevice
 from ..states import ChargingStatus, LightStatus, PortStatus
 
