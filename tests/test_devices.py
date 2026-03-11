@@ -813,7 +813,7 @@ async def test_telemetry_packet_processing(
         ),
     ],
 )
-async def test_bad_values(
+async def test_bad_telemetry_payload(
     caplog,
     device_class: SolixBLEDevice,
     payload: str,
@@ -848,3 +848,57 @@ async def test_bad_values(
 
     for error_message in errors:
         assert error_message in caplog.text
+
+
+# This is an experimental test for a packet that I seem to sometimes get that does not
+# currently parse properly but its not like it contains anything super interesting (its
+# just the model number) so I am leaving it here for now as I am not super concerned
+# about decoding it
+#
+# @pytest.mark.asyncio
+# @pytest.mark.parametrize(
+#     "payload,mapping,errors",
+#     [
+#         pytest.param(
+#             "a10131a22b00040a05413137363112003204380340029a01140852102d18932d20a60c28d9103006380940e30db001c21ca31b046368617267696e675f7070735f7365726965735f635f303030320202",
+#             {
+#                 "a1": bytes.fromhex("31"),
+#                 "a2": bytes.fromhex(
+#                     "00040a05413137363112003204380340029a01140852102d18932d20a60c28d9103006380940e30db001c21c"
+#                 ),
+#                 "a3": bytes.fromhex(
+#                     "046368617267696e675f7070735f7365726965735f635f30303032"
+#                 ),
+#             },
+#             [],
+#             id="c300_unusual",
+#         ),
+#     ],
+# )
+# async def test_payload_parsing(
+#     caplog,
+#     payload: str,
+#     mapping: dict[str, Any],
+#     errors: list[str],
+# ) -> None:
+#     """
+#     Test the parsing of payloads into parameters.
+
+#     Anker devices produce a variety of packets and payloads, this tests
+#     that those are correctly decoded into parameters. This exists to cover
+#     some of the more unusual payloads that are sometimes received.
+
+#     :param payload: The payload bytes from a packet.
+#     :param mapping: Mapping of payload keys to payload values.
+#     :param errors: List of expected error strings in logs (if any).
+#     """
+
+#     caplog.set_level(logging.DEBUG)
+
+#     device = SolixBLEDevice(MOCK_BLE_DEVICE)
+#     parameters = device._parse_payload(bytes.fromhex(payload))
+
+#     assert mapping == parameters
+
+#     for error_message in errors:
+#         assert error_message in caplog.text
