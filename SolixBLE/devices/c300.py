@@ -324,7 +324,7 @@ class C300(SolixBLEDevice):
         """Request and retrieve a status update from the device.
 
         :raises ConnectionError: If not connected to device.
-        :raises TimeoutError If no response from device.
+        :raises TimeoutError: If no response from device.
         :raises BleakError: If command transmission fails.
         :returns: Dictionary containing telemetry parameters.
         """
