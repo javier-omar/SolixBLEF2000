@@ -27,8 +27,8 @@ class PortStatus(Enum):
         """Custom factory for ports which only support being inputs."""
 
         # If it would be an output (i.e 1) set it to input (i.e 2).
-        if value == PortStatus.OUTPUT:
-            value = PortStatus.INPUT
+        if value == PortStatus.OUTPUT.value:
+            value = PortStatus.INPUT.value
 
         return cls(value)
 
