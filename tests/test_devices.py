@@ -930,3 +930,47 @@ async def test_bad_values(
 
     for error_message in errors:
         assert error_message in caplog.text
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "device_class,payload,parameters",
+    [
+        pytest.param(
+            C1000,
+            "a10131a23200040a0541313736311200320538c90c40519a011908c44a10fc051893820420e9990428d908305a38a80e40c601b0019b9101a31b046368617267696e675f7070735f7365726965735f635f303030320b0b0b0b0b0b0b0b0b0b0b",
+            None,
+            id="c1000_unknown",
+        ),
+    ],
+)
+async def test_payload_parsing(
+    caplog,
+    device_class: SolixBLEDevice,
+    payload: str,
+    parameters: str | None,
+) -> None:
+    """
+    Test that a payload is parsed into the correct parameters.
+
+    This only tests that the payload of the packet can be parsed into
+    the expected parameters. These tests exist to make sure that
+    device._parse_payload() can handle all the payloads we can throw
+    at it to avoid those pesky Unexpected end of packet! errors
+    polluting the logs.
+
+    :param device_class: Class of device under test.
+    :param payload: The payload bytes from any packet.
+    :param parameters: Mapping of class properties to their expected value or None if we do not care.
+    """
+    caplog.set_level(logging.ERROR)
+
+    device = device_class(MOCK_BLE_DEVICE)
+    decoded_parameters = device._parse_payload(bytes.fromhex(payload))
+
+    # Test that parameters match if set
+    if parameters is not None:
+        assert parameters == str(decoded_parameters), "Expected parameters to match!"
+
+    # Test that there are no errors in the logs
+    assert len(caplog.records) == 0, f"Expected no errors but found: {caplog.text}"

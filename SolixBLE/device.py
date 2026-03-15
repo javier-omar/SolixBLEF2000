@@ -358,19 +358,74 @@ class SolixBLEDevice:
         return packet_pattern, packet_cmd, packet_payload
 
     def _parse_payload(self, payload: bytearray) -> dict[str, bytes]:
-        """Parse payload bytes into parameters."""
+        """
+        Parse payload bytes into parameters.
+
+        Payloads contain a list of parameters and these parameters
+        have a format of: <id 1B> <len 1-2B> <type 1B> <data nB>.
+
+        The end of a payload is padded using PKCS7 if it was
+        encrypted using AES CBC.
+
+        If an error occurs when decoding a parameter it prevents all
+        further parameters from being parsed and logs an exception,
+        but the successfully parsed parameters (if any) will be returned.
+
+        :param payload: Payload to parse into parameters.
+        :returns: Dictionary mapping parameter ids (a1, a2, ...) to data.
+        """
+
+        def _is_pkcs7_padding(data: bytearray) -> bool:
+            """Is the data PKCS7 padding."""
+            return len(data) < 16 and data == bytearray(
+                len(data) * len(data).to_bytes(1)
+            )
+
+        def _verbose_pop(data: bytearray, length: int, name: str) -> bytes:
+            """
+            Pop specified number of bytes from bytearray and log if error.
+
+            :param data: Data to be popped.
+            :param length: Number of bytes to pop and return.
+            :param name: Name of value being popped to put in logs if error.
+            :raises IndexError: If popping fails.
+            """
+
+            # Copy of bytes to use in error message if needed
+            data_copy = bytes(data)
+
+            # Bytes extracted so far
+            new_bytes = bytes([])
+
+            try:
+                # Pop length bytes from data and return
+                for _ in range(length):
+                    new_bytes = new_bytes + bytes([data.pop(0)])
+                return new_bytes
+
+            # Build error message
+            except IndexError as e:
+                message = (
+                    f"Error extracting {name} (len={length}) from '{data_copy.hex()}'"
+                    f" (len={len(data_copy)}) at index {len(new_bytes)}. We extracted:"
+                    f" '{new_bytes.hex()}' but expected {length - len(data_copy)}"
+                    f" more bytes!"
+                )
+                _LOGGER.exception(message)
+                raise IndexError(message) from e
 
         parsed_data: dict[str, bytes] = {}
         remaining_data = bytearray(payload)
 
-        # Packets sometimes start with 00 and we must strip that
+        # Payloads sometimes start with 00 and we must strip that
         if remaining_data.startswith(bytes.fromhex("00")):
-            remaining_data.pop(0)
+            _LOGGER.debug("Stripped 00 from start of payload")
+            _verbose_pop(remaining_data, 1, "special 00 header")
 
         while len(remaining_data) != 0:
             try:
                 # Extract param id (e.g a1, a2, ...)
-                param_id = bytes([remaining_data.pop(0)]).hex()
+                param_id = _verbose_pop(remaining_data, 1, "param_id").hex()
 
                 # Sometimes there is just a param_id with no length or values
                 # and then padding after that. This has been observed during
@@ -379,26 +434,40 @@ class SolixBLEDevice:
                 #
                 # If we have reached PKCS7 padding then we have
                 # reached the end of the payload
-                if len(remaining_data) < 16 and remaining_data == bytearray(
-                    len(remaining_data) * len(remaining_data).to_bytes(1)
-                ):
+                if _is_pkcs7_padding(remaining_data):
                     parsed_data[param_id] = bytes()
                     break
 
-                param_len = remaining_data.pop(0)
-                param_data = bytes([remaining_data.pop(0) for _ in range(0, param_len)])
+                # Extract encoded length of parameter
+                param_len = int.from_bytes(
+                    _verbose_pop(remaining_data, 1, f"param_len (id={param_id})")
+                )
+
+                # Sometimes the encoded length of a parameter is 2 bytes rather
+                # than 1 bytes, this happens with the "04" type of parameter.
+                # With Anker's implementation of BLE it is more or less impossible
+                # for a parameter to actually need those two bytes (i.e exceed a
+                # length of 255) but we still need to skip past this byte otherwise
+                # the next parameter will start too soon and fail to parse
+                if remaining_data.startswith(bytes.fromhex("0004")):
+                    param_len = param_len + 1
+
+                # Extract data/body from parameter
+                param_data = _verbose_pop(
+                    remaining_data, param_len, f"param_data (id={param_id})"
+                )
                 parsed_data[param_id] = param_data
 
                 # If we have reached PKCS7 padding then we have
                 # reached the end of the payload
-                if len(remaining_data) < 16 and remaining_data == bytearray(
-                    len(remaining_data) * len(remaining_data).to_bytes(1)
-                ):
+                if _is_pkcs7_padding(remaining_data):
                     break
 
             except IndexError:
                 _LOGGER.exception(
-                    f"Unexpected end of packet! Data may be missing or invalid! Payload: '{payload.hex()}'"
+                    f"Unexpected end of packet! Data may be missing or invalid!"
+                    f" Extracted so far: '{self._parameters_to_str(parsed_data)}'."
+                    f" Payload: '{payload.hex()}'"
                 )
 
         return parsed_data
