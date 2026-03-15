@@ -343,10 +343,10 @@ class C300DC(SolixBLEDevice):
         return TemperatureUnit(self._parse_int("c9", begin=1))
 
     @property
-    def display_switch(self) -> bool:
-        """Display switch status.
+    def is_display_on(self) -> bool:
+        """Display on status.
 
-        :returns: Status of the display switch.
+        :returns: Status of the display.
         """
         return (
             bool(self._parse_int("ca", begin=1))
