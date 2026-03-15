@@ -28,24 +28,24 @@ class C300DC(SolixBLEDevice):
     _EXPECTED_TELEMETRY_LENGTH: int = 253
 
     @property
-    def dc_output_timeout(self) -> int:
-        """DC output timeout in seconds.
+    def dc_timer_remaining(self) -> int:
+        """Time remaining on DC timer.
 
-        :returns: DC output timeout or default int value.
+        :returns: Seconds remaining or default int value.
         """
         return self._parse_int("a2", begin=1)
 
     @property
-    def timestamp_dc_output(self) -> datetime | None:
-        """Timestamp of when DC output is switched off.
+    def dc_timer(self) -> datetime | None:
+        """Timestamp of DC timer.
 
-        :returns: Timestamp of when DC output is switched off or None.
+        :returns: Timestamp of when DC timer expires or None.
         """
         if (
-            self.dc_output_timeout != DEFAULT_METADATA_INT
-            and self.dc_output_timeout != 0
+            self.dc_timer_remaining != DEFAULT_METADATA_INT
+            and self.dc_timer_remaining != 0
         ):
-            return datetime.now() + timedelta(seconds=self.dc_output_timeout)
+            return datetime.now() + timedelta(seconds=self.dc_timer_remaining)
 
     @property
     def hours_remaining(self) -> float:
