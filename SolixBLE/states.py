@@ -157,6 +157,34 @@ class GridStatus(Enum):
     NO_GRID = 6
 
 
+class SBUsageMode(Enum):
+    """Usage mode of a Solarbank device."""
+
+    #: The usage mode is unknown.
+    UNKNOWN = -1
+
+    #: Manual (schedule) mode.
+    MANUAL = 1
+
+    #: Smart meter mode.
+    SMARTMETER = 2
+
+    #: Smart plugs mode.
+    SMARTPLUGS = 3
+
+    #: Backup mode.
+    BACKUP = 4
+
+    #: Use time mode.
+    USE_TIME = 5
+
+    #: Smart mode.
+    SMART = 7
+
+    #: Time slot mode.
+    TIME_SLOT = 8
+
+
 class PortOverload(Enum):
     """The overload status of a port."""
 

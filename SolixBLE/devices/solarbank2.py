@@ -4,9 +4,38 @@
 
 """
 
-from ..const import DEFAULT_METADATA_BOOL, DEFAULT_METADATA_FLOAT, DEFAULT_METADATA_STRING
+from enum import Enum
+
+from ..const import (
+    DEFAULT_METADATA_BOOL,
+    DEFAULT_METADATA_FLOAT,
+    DEFAULT_METADATA_STRING,
+)
 from ..device import SolixBLEDevice
-from ..states import GridStatus, LightMode, TemperatureUnit
+from ..states import GridStatus, LightMode, SBUsageMode, TemperatureUnit
+
+
+class MaxLoadSB2(Enum):
+    """
+    Maximum output power of the Solarbank 2 in watts.
+    
+    Only specific values are allowed.
+    """
+
+    #: The maximum load is unknown.
+    UNKNOWN = -1
+
+    #: 350 watts.
+    W350 = 350
+
+    #: 600 watts.
+    W600 = 600
+
+    #: 800 watts.
+    W800 = 800
+
+    #: 1000 watts.
+    W1000 = 1000
 
 
 class Solarbank2(SolixBLEDevice):
@@ -344,20 +373,23 @@ class Solarbank2(SolixBLEDevice):
         return self._parse_int("b6", begin=1)
 
     @property
-    def max_load(self) -> int:
-        """Maximum load in watts.
-
-        :returns: Maximum load in watts or default int value.
+    def max_load(self) -> MaxLoadSB2:
         """
-        return self._parse_int("c2", begin=1)
+        Maximum output power in watts.
+        
+        Maximum legal value depends on country of operation.
+
+        :returns: Maximum load as a MaxLoadSB2 enum value.
+        """
+        return MaxLoadSB2(self._parse_int("c2", begin=1))
 
     @property
-    def usage_mode(self) -> int:
+    def usage_mode(self) -> SBUsageMode:
         """Usage mode.
 
-        :returns: Usage mode or default int value.
+        :returns: Usage mode as a SBUsageMode enum value.
         """
-        return self._parse_int("c6", begin=1)
+        return SBUsageMode(self._parse_int("c6", begin=1))
 
     @property
     def home_load_preset(self) -> int:
