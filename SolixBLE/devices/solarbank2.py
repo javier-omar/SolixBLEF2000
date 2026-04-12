@@ -12,7 +12,7 @@ from ..const import (
     DEFAULT_METADATA_STRING,
 )
 from ..device import SolixBLEDevice
-from ..states import GridStatus, LightMode, SBUsageMode, TemperatureUnit
+from ..states import GridStatus, LightMode, SBPowerCutoff, SBUsageMode, TemperatureUnit
 
 
 class MaxLoadSB2(Enum):
@@ -158,9 +158,9 @@ class Solarbank2(SolixBLEDevice):
 
     @property
     def pv_yield(self) -> float:
-        """Solar power generated.
+        """Solar energy generated in kWh.
 
-        :returns: Total solar power generated or default float value.
+        :returns: Total solar energy generated or default float value.
         """
         if self._data is None:
             return DEFAULT_METADATA_FLOAT
@@ -169,18 +169,20 @@ class Solarbank2(SolixBLEDevice):
 
     @property
     def charged_energy(self) -> float:
-        """Energy used to charge the battery?
+        """Total accumulated energy that passed through the battery in kWh
 
-        :returns: I don't know what this means or default float value.
+        :returns: The amount of energy or default float value.
         """
         if self._data is None:
             return DEFAULT_METADATA_FLOAT
 
-        return self._parse_int("b2", begin=1) / 10000.0
+        # The / 100 000 is correct despite all other divisors being 10 000.
+        # This is the "Storage" stats field in the Anker app
+        return self._parse_int("b2", begin=1) / 100000.0
 
     @property
     def output_energy(self) -> float:
-        """Output energy.
+        """Output energy in kWh.
 
         :returns: Total energy output or default float value.
         """
@@ -349,12 +351,15 @@ class Solarbank2(SolixBLEDevice):
         return TemperatureUnit(self._parse_int("a9", begin=1))
 
     @property
-    def output_cutoff_data(self) -> int:
-        """Output cutoff data.
-
-        :returns: Output cutoff data or default int value.
+    def output_cutoff_data(self) -> SBPowerCutoff:
         """
-        return self._parse_int("b4", begin=1)
+        Output cutoff threshold in %.
+
+        Minimum battery SOC to maintain.
+
+        :returns: Output cutoff battery SOC threshold.
+        """
+        return SBPowerCutoff(self._parse_int("b4", begin=1))
 
     @property
     def lowpower_input_data(self) -> int:
@@ -365,12 +370,12 @@ class Solarbank2(SolixBLEDevice):
         return self._parse_int("b5", begin=1)
 
     @property
-    def input_cutoff_data(self) -> int:
-        """Input cutoff data.
+    def input_cutoff_data(self) -> SBPowerCutoff:
+        """Input cutoff threshold in %.
 
-        :returns: Input cutoff data or default int value.
+        :returns: Input cutoff battery SOC threshold.
         """
-        return self._parse_int("b6", begin=1)
+        return SBPowerCutoff(self._parse_int("b6", begin=1))
 
     @property
     def max_load(self) -> MaxLoadSB2:

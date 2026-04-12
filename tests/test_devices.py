@@ -26,7 +26,8 @@ from SolixBLE import (
     SolixBLEDevice,
     TemperatureUnit,
 )
-from SolixBLE.states import GridStatus, LightMode
+from SolixBLE.devices.solarbank2 import MaxLoadSB2
+from SolixBLE.states import GridStatus, LightMode, SBPowerCutoff, SBUsageMode
 from tests.const import (
     MOCK_BLE_DEVICE,
     NEGOTIATION_RESPONSES_PRIME,
@@ -639,7 +640,7 @@ from tests.helpers import MockDevice
                 "battery_charge_power": 0.0,
                 "battery_discharge_power": 50.0,
                 "pv_yield": 17.968,
-                "charged_energy": 67.0834,
+                "charged_energy": 6.70834,
                 "output_energy": 16.5005,
                 "grid_to_home_power": 0.0,
                 "pv_to_grid_power": 0.0,
@@ -648,11 +649,11 @@ from tests.helpers import MockDevice
                 "house_demand": 50.0,
                 "consumed_energy": 0.0006,
                 "power_out": 50.0,
-                "max_load": 800,
-                "output_cutoff_data": 5,
+                "max_load": MaxLoadSB2.W800,
+                "output_cutoff_data": SBPowerCutoff.P5,
                 "lowpower_input_data": 4,
-                "input_cutoff_data": 5,
-                "usage_mode": 1,
+                "input_cutoff_data": SBPowerCutoff.P5,
+                "usage_mode": SBUsageMode.MANUAL,
                 "home_load_preset": 50,
                 "light_mode": LightMode.NORMAL,
                 "grid_status": GridStatus.OK_AS_WELL_I_GUESS,
