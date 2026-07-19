@@ -36,7 +36,7 @@ Power station support
 ======================= ======== ========== ========= ========= ========= ============ ====== ======
 Parameter               C300(X)  C300(X) DC C800(X)   C1000(X)  C1000 G2  F2000 (767)  F2600  F3800
 ======================= ======== ========== ========= ========= ========= ============ ====== ======
-Charging status         ✅        ✅          ❌        ❌        ❌         ✅           ✅      ✅
+Charging status         ✅        ✅          ❌        ✅        ❌         ✅           ✅      ✅
 Time remaining          ✅        ✅          ✅        ✅        ❌         ✅           ✅      ✅
 Battery percentage      ✅        ✅          ✅        ✅        ✅         ✅           ✅      ✅
 Battery health          ❌        ✅          ✅        ✅        ✅         ✅           ✅      ❌
@@ -59,11 +59,11 @@ USB Port status         ✅        ✅          ❌        ❌        ✅       
 Light control           ✅        ❌          ✅        ✅        ❌         ✅           ✅      ❌
 Light status            ✅        ✅          ❌        ✅        N/A        ✅           ✅      ❌
 Display on/off control  ✅        ❌          ✅        ✅        ❌         ✅           ✅      ❌
-Display on/off status   ❌        ✅          ❌        ❌        ❌         ✅           ✅      ❌
+Display on/off status   ❌        ✅          ❌        ✅        ❌         ✅           ✅      ❌
 Display brightness ctrl ✅        ❌          ✅        ✅        ❌         ✅           ✅      ❌
-Display brightness stat ❌        ✅          ❌        ❌        ❌         ✅           ✅      ❌
+Display brightness stat ❌        ✅          ❌        ✅        ❌         ✅           ✅      ❌
 Display timeout ctrl    ✅        ❌          ✅        ✅        ❌         ✅           ✅      ❌
-Display timeout stat    ❌        ✅          ❌        ❌        ❌         ✅           ✅      ❌
+Display timeout stat    ❌        ✅          ❌        ✅        ❌         ✅           ✅      ❌
 Firmware version        ✅        ✅          ✅        ✅        ❌         ✅           ✅      ✅
 Serial number           ✅        ✅          ✅        ✅        ✅         ✅           ✅      ✅
 Expansion temperature   N/A       N/A         N/A      ✅        N/A       ✅           ✅      ❌
