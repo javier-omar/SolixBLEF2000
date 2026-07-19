@@ -233,6 +233,33 @@ class C1000(SolixBLEDevice):
         return PortStatus(self._parse_int("bb", begin=1))
 
     @property
+    def dc_output(self) -> PortStatus:
+        """DC Port Status.
+
+        PortStatus.NOT_CONNECTED signifies off.
+        PortStatus.OUTPUT signifies on.
+
+        Based on observed C1000 telemetry, key ``cc`` tracks DC output state.
+
+        :returns: Status of the DC port or UNKNOWN if not present.
+        """
+        if self._data is None or "cc" not in self._data:
+            return PortStatus.UNKNOWN
+        return PortStatus(self._parse_int("cc", begin=1))
+
+    @property
+    def light(self) -> LightStatus:
+        """Light bar status.
+
+        Based on observed C1000 telemetry, key ``dc`` tracks the light mode.
+
+        :returns: Status of the light bar or UNKNOWN if not present.
+        """
+        if self._data is None or "dc" not in self._data:
+            return LightStatus.UNKNOWN
+        return LightStatus(self._parse_int("dc", begin=1))
+
+    @property
     def temperature(self) -> int:
         """Temperature of the unit (C).
 
