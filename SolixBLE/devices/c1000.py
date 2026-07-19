@@ -263,15 +263,16 @@ class C1000(SolixBLEDevice):
     def charging_status(self) -> ChargingStatus:
         """Charging status of the device.
 
-        Based on observed C1000 telemetry, key ``bc`` tracks charging status.
-        Idle (0) and charging (2) are confirmed on hardware; discharging (1)
-        is inferred from other models.
+        Based on charge/discharge probing on real hardware, key ``bf`` tracks
+        the full status: 0 idle, 1 discharging, 2 charging - all three states
+        confirmed. (Key ``bc`` was tried first but never reports discharging -
+        battery-only discharge reads as idle there.)
 
         :returns: Status of charging or UNKNOWN if not present.
         """
-        if self._data is None or "bc" not in self._data:
+        if self._data is None or "bf" not in self._data:
             return ChargingStatus.UNKNOWN
-        return ChargingStatus(self._parse_int("bc", begin=1))
+        return ChargingStatus(self._parse_int("bf", begin=1))
 
     @property
     def is_display_on(self) -> bool | None:
