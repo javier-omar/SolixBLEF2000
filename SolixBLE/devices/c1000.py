@@ -553,4 +553,5 @@ class C1000(SolixBLEDevice):
         decrypted_payload = self._decrypt_payload(new_payload)
         parameters = self._parse_payload(decrypted_payload)
         _LOGGER.debug(f"Parameters: {self._parameters_to_str(parameters, types=True)}")
+        await self._process_telemetry(parameters)  # update the internal parameters as well
         return parameters
