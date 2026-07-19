@@ -22,11 +22,13 @@ CMD_LIGHT_MODE = "404f"
 CMD_DISPLAY_MODE = "404c"
 CMD_DISPLAY_TIMEOUT = "4046"
 CMD_DISPLAY_ON_OFF = "4052"
+CMD_AC_CHARGING_POWER = "4044"
 
 PAYLOAD_ON = "a10121a2020101"
 PAYLOAD_OFF = "a10121a2020100"
 PAYLOAD_LIGHT_MODE = "a10121a20201"
 PAYLOAD_TIMEOUT_TIME = "a10121a20302"
+PAYLOAD_AC_CHARGING_POWER = "a10121a20302"
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -497,6 +499,28 @@ class C1000(SolixBLEDevice):
         """
         await self._send_command(
             cmd=bytes.fromhex(CMD_DISPLAY_ON_OFF), payload=bytes.fromhex(PAYLOAD_OFF)
+        )
+
+    async def set_ac_charging_power(self, watts: int) -> None:
+        """Set the AC charging power limit in watts.
+
+        Confirmed on hardware: the C1000 accepts the same command (``4044``) as
+        the F2000 and telemetry key ``d1`` tracks the value set. The accepted
+        range is assumed to match the F2000 (100-1440 W); the device clamps to
+        its own capability if lower.
+
+        :param watts: AC charging power limit in watts.
+        :raises ValueError: If power value is out of valid range.
+        :raises ConnectionError: If not connected to device.
+        :raises BleakError: If command transmission fails.
+        """
+        if watts < 100 or watts > 1440:
+            raise ValueError("AC charging power must be between 100 and 1440 W")
+
+        await self._send_command(
+            cmd=bytes.fromhex(CMD_AC_CHARGING_POWER),
+            payload=bytes.fromhex(PAYLOAD_AC_CHARGING_POWER)
+            + watts.to_bytes(length=2, byteorder="little", signed=False),
         )
 
     async def get_status_update(self) -> dict[str, bytes]:
