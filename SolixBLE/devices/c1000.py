@@ -14,7 +14,7 @@ from ..const import (
     DEFAULT_METADATA_STRING,
 )
 from ..device import SolixBLEDevice
-from ..states import DisplayTimeout, LightStatus, PortStatus
+from ..states import ChargingStatus, DisplayTimeout, LightStatus, PortStatus
 
 CMD_AC_OUTPUT = "404a"
 CMD_DC_OUTPUT = "404b"
@@ -258,6 +258,72 @@ class C1000(SolixBLEDevice):
         if self._data is None or "dc" not in self._data:
             return LightStatus.UNKNOWN
         return LightStatus(self._parse_int("dc", begin=1))
+
+    @property
+    def charging_status(self) -> ChargingStatus:
+        """Charging status of the device.
+
+        Based on observed C1000 telemetry, key ``bc`` tracks charging status
+        (0 idle, 1 discharging, 2 charging). Only the idle state has been
+        directly observed; the mapping is inferred from other models.
+
+        :returns: Status of charging or UNKNOWN if not present.
+        """
+        if self._data is None or "bc" not in self._data:
+            return ChargingStatus.UNKNOWN
+        return ChargingStatus(self._parse_int("bc", begin=1))
+
+    @property
+    def is_display_on(self) -> bool | None:
+        """Whether the LCD display is on.
+
+        Based on observed C1000 telemetry, key ``de`` tracks display on/off.
+
+        :returns: True if on, False if off, or default bool value.
+        """
+        return (
+            bool(self._parse_int("de", begin=1))
+            if self._data is not None and "de" in self._data
+            else DEFAULT_METADATA_BOOL
+        )
+
+    @property
+    def display_mode(self) -> LightStatus:
+        """Configured display brightness level.
+
+        Based on observed C1000 telemetry, key ``d9`` tracks display brightness.
+
+        :returns: Display brightness as LightStatus (LOW/MEDIUM/HIGH) or UNKNOWN.
+        """
+        if self._data is None or "d9" not in self._data:
+            return LightStatus.UNKNOWN
+        return LightStatus(self._parse_int("d9", begin=1))
+
+    @property
+    def display_timeout_seconds(self) -> int:
+        """Configured display timeout in seconds.
+
+        Based on observed C1000 telemetry, key ``d3`` tracks display timeout.
+
+        :returns: Display timeout in seconds or default int value.
+        """
+        if self._data is None or "d3" not in self._data:
+            return DEFAULT_METADATA_INT
+        return self._parse_int("d3", begin=1)
+
+    @property
+    def ac_charging_power(self) -> int:
+        """Configured AC charging power limit in watts.
+
+        Based on observed C1000 telemetry, key ``d1`` holds the AC charging
+        power limit. Inferred from other models; not directly settable on the
+        C1000 via this library.
+
+        :returns: AC charging power limit or default int value.
+        """
+        if self._data is None or "d1" not in self._data:
+            return DEFAULT_METADATA_INT
+        return self._parse_int("d1", begin=1)
 
     @property
     def temperature(self) -> int:
