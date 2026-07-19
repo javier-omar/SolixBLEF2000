@@ -263,9 +263,9 @@ class C1000(SolixBLEDevice):
     def charging_status(self) -> ChargingStatus:
         """Charging status of the device.
 
-        Based on observed C1000 telemetry, key ``bc`` tracks charging status
-        (0 idle, 1 discharging, 2 charging). Only the idle state has been
-        directly observed; the mapping is inferred from other models.
+        Based on observed C1000 telemetry, key ``bc`` tracks charging status.
+        Idle (0) and charging (2) are confirmed on hardware; discharging (1)
+        is inferred from other models.
 
         :returns: Status of charging or UNKNOWN if not present.
         """
