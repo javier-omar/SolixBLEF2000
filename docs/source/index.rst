@@ -52,12 +52,12 @@ DC on/off control       ✅        ❌          ✅        ✅        ❌       
 DC Power in             ✅        ✅          ✅        ✅        ✅         ✅           ✅      ✅
 DC Power out            ✅        ✅          ❌        ❌        ✅         ✅           ✅      ✅
 DC Power in status      ✅        ✅          ❌        ❌        ✅         ❌           ✅      ❌
-DC Power out status     ✅        ❌          ❌        ❌        ✅         ✅           ✅      ✅
+DC Power out status     ✅        ❌          ❌        ✅        ✅         ✅           ✅      ✅
 DC Timer                ✅        ✅          ❌        ❌        ❌         ✅           ✅      ❌
 USB Power out           ✅        ✅          ✅        ✅        ✅         ✅           ✅      ✅
 USB Port status         ✅        ✅          ❌        ❌        ✅         ❌           ✅      ✅
 Light control           ✅        ❌          ✅        ✅        ❌         ✅           ✅      ❌
-Light status            ✅        ✅          ❌        ❌        N/A        ✅           ✅      ❌
+Light status            ✅        ✅          ❌        ✅        N/A        ✅           ✅      ❌
 Display on/off control  ✅        ❌          ✅        ✅        ❌         ✅           ✅      ❌
 Display on/off status   ❌        ✅          ❌        ❌        ❌         ✅           ✅      ❌
 Display brightness ctrl ✅        ❌          ✅        ✅        ❌         ✅           ✅      ❌
