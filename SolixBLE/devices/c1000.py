@@ -317,6 +317,37 @@ class C1000(SolixBLEDevice):
         )
 
     @property
+    def output_memory_enabled(self) -> bool | None:
+        """Whether the output ports remember their on/off state across power
+        cycles ("output memory switch" in the app).
+
+        Confirmed on hardware via differential toggling: key ``f7`` tracks this
+        (1 enabled, 0 disabled). Read-only - this library cannot set it yet.
+
+        :returns: True if enabled, False if disabled, or default bool value.
+        """
+        return (
+            bool(self._parse_int("f7", begin=1))
+            if self._data is not None and "f7" in self._data
+            else DEFAULT_METADATA_BOOL
+        )
+
+    @property
+    def smart_ac_output_enabled(self) -> bool | None:
+        """Whether smart AC output mode is on (auto-off of AC output when no
+        load is connected for ~15 min, to save power).
+
+        Confirmed on hardware via differential toggling: it is encoded in a byte
+        of the packed key ``f8`` (offset 2, 2 on / 1 off). Read-only - this
+        library cannot set it yet.
+
+        :returns: True if enabled, False if disabled, or default bool value.
+        """
+        if self._data is None or "f8" not in self._data or len(self._data["f8"]) < 3:
+            return DEFAULT_METADATA_BOOL
+        return self._parse_int("f8", begin=2, end=3) == 2
+
+    @property
     def display_mode(self) -> LightStatus:
         """Configured display brightness level.
 
