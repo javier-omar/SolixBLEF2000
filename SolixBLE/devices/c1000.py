@@ -16,6 +16,8 @@ from ..const import (
 from ..device import SolixBLEDevice
 from ..states import ChargingStatus, DisplayTimeout, LightStatus, PortStatus
 
+CMD_AC_TIMER = "4042"
+CMD_DC_TIMER = "4043"
 CMD_AC_OUTPUT = "404a"
 CMD_DC_OUTPUT = "404b"
 CMD_LIGHT_MODE = "404f"
@@ -29,6 +31,7 @@ PAYLOAD_OFF = "a10121a2020100"
 PAYLOAD_LIGHT_MODE = "a10121a20201"
 PAYLOAD_TIMEOUT_TIME = "a10121a20302"
 PAYLOAD_AC_CHARGING_POWER = "a10121a20302"
+PAYLOAD_TIMER = "a10121a20502"
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -63,6 +66,29 @@ class C1000(SolixBLEDevice):
             and self.ac_timer_remaining != 0
         ):
             return datetime.now() + timedelta(seconds=self.ac_timer_remaining)
+
+    @property
+    def dc_timer_remaining(self) -> int:
+        """Time remaining on DC timer.
+
+        Based on observed C1000 telemetry, key ``a3`` tracks the DC output
+        auto-off timer (seconds), matching the F2000.
+
+        :returns: Seconds remaining or default int value.
+        """
+        return self._parse_int("a3", begin=1)
+
+    @property
+    def dc_timer(self) -> datetime | None:
+        """Timestamp of DC timer.
+
+        :returns: Timestamp of when DC timer expires or None.
+        """
+        if (
+            self.dc_timer_remaining != DEFAULT_METADATA_INT
+            and self.dc_timer_remaining != 0
+        ):
+            return datetime.now() + timedelta(seconds=self.dc_timer_remaining)
 
     @property
     def hours_remaining(self) -> float:
@@ -521,6 +547,38 @@ class C1000(SolixBLEDevice):
             cmd=bytes.fromhex(CMD_AC_CHARGING_POWER),
             payload=bytes.fromhex(PAYLOAD_AC_CHARGING_POWER)
             + watts.to_bytes(length=2, byteorder="little", signed=False),
+        )
+
+    async def set_ac_timer(self, seconds: int) -> None:
+        """Set the AC output auto-off timer.
+
+        Confirmed on hardware: the C1000 accepts the same command (``4042``) as
+        the F2000 and telemetry key ``a2`` tracks the value set.
+
+        :param seconds: Seconds until AC output shuts off. Pass 0 to cancel.
+        :raises ConnectionError: If not connected to device.
+        :raises BleakError: If command transmission fails.
+        """
+        await self._send_command(
+            cmd=bytes.fromhex(CMD_AC_TIMER),
+            payload=bytes.fromhex(PAYLOAD_TIMER)
+            + seconds.to_bytes(length=4, byteorder="little", signed=False),
+        )
+
+    async def set_dc_timer(self, seconds: int) -> None:
+        """Set the DC output auto-off timer.
+
+        Confirmed on hardware: the C1000 accepts the same command (``4043``) as
+        the F2000 and telemetry key ``a3`` tracks the value set.
+
+        :param seconds: Seconds until DC output shuts off. Pass 0 to cancel.
+        :raises ConnectionError: If not connected to device.
+        :raises BleakError: If command transmission fails.
+        """
+        await self._send_command(
+            cmd=bytes.fromhex(CMD_DC_TIMER),
+            payload=bytes.fromhex(PAYLOAD_TIMER)
+            + seconds.to_bytes(length=4, byteorder="little", signed=False),
         )
 
     async def get_status_update(self) -> dict[str, bytes]:
