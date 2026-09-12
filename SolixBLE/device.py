@@ -16,7 +16,8 @@ from functools import partial
 from bleak import BleakClient, BleakError
 from bleak.backends.client import BaseBleakClient
 from bleak.backends.device import BLEDevice
-from bleak_retry_connector import establish_connection
+from bleak.exc import BleakCharacteristicNotFoundError
+from bleak_retry_connector import clear_cache, establish_connection
 from Crypto.Cipher import AES
 from cryptography.hazmat.primitives.asymmetric.ec import (
     ECDH,
@@ -158,8 +159,25 @@ class SolixBLEDevice:
             await self._client.start_notify(
                 UUID_TELEMETRY, partial(self._process_notification, self._client)
             )
-        except BleakError:
-            _LOGGER.exception(f"Error subscribing/negotiating with '{self.name}'!")
+        except BleakCharacteristicNotFoundError:
+            # The telemetry characteristic is missing from the discovered GATT
+            # table. This is typically a stale/incomplete cached service table
+            # (e.g. the services were cached while the device was still waking
+            # from a long sleep). Clear the cache so the next reconnect
+            # rediscovers services directly from the device, then fail this
+            # attempt so the automatic reconnect retries with a clean table.
+            _LOGGER.debug(
+                "Telemetry characteristic not found on '%s'; clearing the GATT"
+                " cache to force a fresh service discovery on the next attempt.",
+                self.name,
+            )
+            try:
+                await clear_cache(self.address)
+            except Exception as e:  # noqa: BLE001 - best effort cache clear
+                _LOGGER.debug("Failed to clear GATT cache for '%s': %s", self.name, e)
+            return False
+        except BleakError as e:
+            _LOGGER.debug("Error subscribing to notifications from '%s': %s", self.name, e)
             return False
 
         # Negotiate
