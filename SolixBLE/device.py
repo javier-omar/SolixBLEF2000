@@ -1077,8 +1077,15 @@ class SolixBLEDevice:
 
                 # If timeout exceeded
                 except asyncio.TimeoutError:
-                    _LOGGER.warning(
-                        f"Timed out attempting to silently reconnect to '{self.name}', callbacks will be triggered due to disconnect!"
+                    # Expected and recurring for a device that is intentionally
+                    # off/asleep: this fires every DISCONNECT_TIMEOUT while it is
+                    # unreachable. The device is marked unavailable via the
+                    # callbacks below (visible in the UI), so log at debug to
+                    # avoid flooding the log while a device is simply off.
+                    _LOGGER.debug(
+                        "Timed out attempting to silently reconnect to '%s';"
+                        " marking it unavailable until it is reachable again.",
+                        self.name,
                     )
                     self._reset_session(reset_data=True)
                     self._run_state_changed_callbacks()
