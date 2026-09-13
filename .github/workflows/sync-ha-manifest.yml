@@ -1,0 +1,90 @@
+name: Sync HA integration on release
+
+# When a version tag (vX.Y.Z) is pushed to this library repo, update the
+# HaSolixBLE integration repo so Home Assistant reinstalls the pinned library:
+#   - manifest.json "requirements" -> pin to this exact tag
+#   - manifest.json "version"      -> X.Y.Z-f2000
+# and publish a matching GitHub release on that repo so HACS shows the update.
+#
+# Requires a repository secret named HA_REPO_TOKEN: a (fine-grained) token with
+# Contents: read and write on javier-omar/HaSolixBLE-F2000-.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+# Let this run alone even if triggered rapidly.
+concurrency:
+  group: sync-ha-manifest
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Compute versions
+        id: v
+        run: |
+          TAG="${GITHUB_REF_NAME}"          # e.g. v3.10.0
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"   # e.g. 3.10.0
+
+      - name: Checkout HA integration repo
+        uses: actions/checkout@v4
+        with:
+          repository: javier-omar/HaSolixBLE-F2000-
+          token: ${{ secrets.HA_REPO_TOKEN }}
+          path: ha
+
+      - name: Update manifest (pin requirement + bump version)
+        env:
+          TAG: ${{ steps.v.outputs.tag }}
+          VERSION: ${{ steps.v.outputs.version }}
+        run: |
+          python3 - <<'PY'
+          import os, re
+          path = "ha/custom_components/solix_ble/manifest.json"
+          tag = os.environ["TAG"]
+          version = os.environ["VERSION"]
+          s = open(path).read()
+          # Pin the git requirement to this exact tag (whatever ref it was on).
+          s = re.sub(r'(SolixBLEF2000\.git@)[^"]+', lambda m: m.group(1) + tag, s)
+          # Set the integration version to X.Y.Z-f2000.
+          s = re.sub(
+              r'("version":\s*")[^"]*(")',
+              lambda m: m.group(1) + version + "-f2000" + m.group(2),
+              s,
+          )
+          open(path, "w").write(s)
+          print(f"Updated manifest to {tag} / {version}-f2000")
+          PY
+
+      - name: Commit and push manifest
+        working-directory: ha
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet; then
+            echo "Manifest already up to date; nothing to commit."
+          else
+            git add custom_components/solix_ble/manifest.json
+            git commit -m "Pin SolixBLE to ${{ steps.v.outputs.tag }} (auto-synced from library release)"
+            git push
+          fi
+
+      - name: Publish HA integration release
+        working-directory: ha
+        env:
+          GH_TOKEN: ${{ secrets.HA_REPO_TOKEN }}
+        run: |
+          REL="v${{ steps.v.outputs.version }}-f2000"
+          if gh release view "$REL" --repo javier-omar/HaSolixBLE-F2000- >/dev/null 2>&1; then
+            echo "Release $REL already exists; skipping."
+          else
+            gh release create "$REL" \
+              --repo javier-omar/HaSolixBLE-F2000- \
+              --target main \
+              --title "$REL" \
+              --notes "Pins SolixBLE ${{ steps.v.outputs.tag }}. Auto-generated from the library release."
+          fi
